@@ -1,0 +1,12 @@
+
+done:
+    Idf non déclaré
+    Idf double déclarée
+    Modification d’une valeur d’une constante
+    Dépassement de la taille d’un tableau
+
+Not Done:
+    Non compatibilité de type
+    Absence d’une bibliothèque nécessaire
+    Vérification des fonction d’entré/sortie : le respecte de formatage, de nombre de paramètres, etc.
+

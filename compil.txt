@@ -1,0 +1,12 @@
+import ISIL.io;
+import ISIL.io;
+public class $chakib{
+    Entier $x,$y,$i;
+    Reel @tab1[10];
+    CONST Entier $val:=10;
+    main(){
+        @tab1[1]:= 10;
+
+
+    }
+}
