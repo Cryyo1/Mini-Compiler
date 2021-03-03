@@ -2,8 +2,12 @@
 int nbligne=1;
 int nbcolonne=1;
 int sauvValue=0;
+float sauvValueReel=0;
 char* sauvOp="";
+char* sauvValueStr="";
 char type[20],constante[20],tmp[20];
+char *ls_idf[20],*list_idf_exp[20];
+int i=0,k=0;
 %}
 
 %union{
@@ -13,13 +17,13 @@ char type[20],constante[20],tmp[20];
 }
 
 %start S
-%token 	mc_import bib_io bib_lang pvg err
+%token 	mc_import <str>bib_io <str>bib_lang pvg err
 	   	mc_class mc_private mc_public mc_protected <str>idf
 	   	mc_entier mc_reel mc_chaine aco_ouv aco_ferm
 		<entier>valeur <reel>valeur_reel <str>idf_tab crochet_ferm crochet_ouv vrgl mc_const 
 		affect mc_somme mc_soust mc_multi mc_div
 		mc_egal mc_inf mc_sup mc_inf_egal mc_sup_egal mc_not_egal mc_for
-		parenth_ouv parenth_ferm mc_out mc_in mc_main mc_text
+		parenth_ouv parenth_ferm mc_out mc_in mc_main <str>mc_text
 %%
 
 S:LISTE_BIB CLASS aco_ouv LISTE_DEC mc_main parenth_ouv parenth_ferm aco_ouv CORPS aco_ferm aco_ferm
@@ -32,8 +36,20 @@ LISTE_BIB: BIB LISTE_BIB
 BIB: mc_import NOM_BIB pvg
 
 ;
-NOM_BIB:bib_io
-	|bib_lang
+NOM_BIB:bib_io {
+	insert($1,"idf_bib");
+	insertType($1,"Sans_type");
+	insertTaille($1,0);
+	insertValue($1,"0");
+	insertIsConst($1,"non_const");
+}
+	|bib_lang {
+	insert($1,"idf_bib");
+	insertType($1,"Sans_type");
+	insertTaille($1,0);
+	insertValue($1,"0");
+	insertIsConst($1,"non_const");
+}
    
 ;
 
@@ -152,17 +168,62 @@ INSTRU: LISTE_AFFECT
 
 ;
 
-LISTE_IDF_IO: idf vrgl LISTE_IDF_IO
-			|idf
+LISTE_IDF_IO: idf vrgl LISTE_IDF_IO {
+	if(idfNotDeclared(strdup($1))==0){
+					
+					ls_idf[i]=$1;
+							i++;
+							
+				} else{
+					printf("Erreur semantique : variable inexistante");
+					YYACCEPT;
+				}
+}
+			|idf {
+				if(idfNotDeclared(strdup($1))==0){
+					
+					ls_idf[i]=$1;
+							i++;
+							
+				} else{
+					printf("Erreur semantique : variable inexistante");
+					YYACCEPT;
+				}
+			}
 
 ;
 
-IN: mc_in parenth_ouv mc_text vrgl LISTE_IDF_IO parenth_ferm pvg
+IN: mc_in parenth_ouv mc_text vrgl LISTE_IDF_IO parenth_ferm pvg {
+	if(recherche("ISIL.io")==0){
+		printf("Erreur semantique: absence de bibiliotheque \"ISIL.io \"");
+		YYACCEPT;
+	}
+	if(formatage($3,ls_idf,i)==0){
+		printf("Erreur semantique de formatage\n");
+		YYACCEPT;
+	}
+
+
+}
 
 ;
 
-OUT: mc_out parenth_ouv mc_text vrgl LISTE_IDF_IO parenth_ferm pvg
-	|mc_out parenth_ouv mc_text parenth_ferm pvg
+OUT: mc_out parenth_ouv mc_text vrgl LISTE_IDF_IO parenth_ferm pvg {
+	if(recherche("ISIL.io")==0){
+		printf("Erreur semantique: absence de bibiliotheque \"ISIL.io \"");
+		YYACCEPT;
+	}
+	if(formatage($3,ls_idf,i)==0){
+		printf("Erreur semantique de formatage\n");
+		YYACCEPT;
+	}
+}
+	|mc_out parenth_ouv mc_text parenth_ferm pvg {
+	if(formatage($3,ls_idf,i)==0){
+		printf("Erreur semantique de formatage\n");
+		YYACCEPT;
+	}
+}
 
 ;
 
@@ -177,9 +238,34 @@ LISTE_AFFECT:idf affect EXPRESSION pvg{
 					printf("Erreur semantique : Variable non Declarer !!!!\n");
 					YYACCEPT;
 				}
+				if(strcmp(getType($1),"Entier") == 0){
+					sprintf(tmp,"%d",sauvValue);
+					insertValue($1,tmp);
+					sauvValue = 0;
+				}else{
+					if(strcmp(getType($1),"reel") == 0){
+						sprintf(tmp,"%f",sauvValueReel);
+						insertValue($1,tmp);
+						sauvValueReel = 0;
+					}else{
+						insertValue($1,sauvValueStr);
+						sauvValueStr = "";
+					}
+
+				}
+
+				if(typeMismatch(list_idf_exp,$1,k)== 1){
+					printf("Erreur semantique :  Non compatibilite de type !!!!\n");
+					YYACCEPT;
+				}
 				
 			}
-			|idf_tab crochet_ouv idf crochet_ferm affect EXPRESSION pvg
+			|idf_tab crochet_ouv idf crochet_ferm affect EXPRESSION pvg {
+				if(indexOutOfBoundV2($1,$3)==1){
+					printf("Erreur semantique : Index superierur a la taille du tableau ou inferierur a 0 !!!!\n");
+					YYACCEPT;
+				}
+			}
 			|idf_tab crochet_ouv valeur crochet_ferm affect EXPRESSION pvg{
 				if(indexOutOfBound($1,$3)==1){
 					printf("Erreur semantique : Index superierur a la taille de tableau ou inferierur a 0 !!!!\n");
@@ -196,13 +282,23 @@ EXPRESSION:	TYPE_VALEUR
 					YYACCEPT;
 				} 
 			}
-			|idf
+			|idf{
+				if(valueNotInitialized($1)){
+					printf ("Erreur semantique : valeur de %s n'est pas intialiser !!!!!\n",$1);
+					YYACCEPT;
+				}
+				list_idf_exp[k]=$1;
+				k++;
+			}
 			|parenth_ouv EXPRESSION parenth_ferm
 
 ;
 
-TYPE_VALEUR:valeur{sauvValue=$1;}
-			|valeur_reel
+TYPE_VALEUR:valeur{
+				sauvValue=$1;
+			}
+			|valeur_reel{sauvValueReel=$1;}
+			|mc_text{sauvValueStr=strdup($1);}
 
 ;
 

@@ -16,17 +16,18 @@ IDF_TAB "@"{LETTRE}({LETTRE}|{CHIFFRE})*
 TEXT \"[^"]*\"
 
 VALEUR {CHIFFRE}+
-VALEUR_REEL ({CHIFFRE}+)(",")({CHIFFRE}+)
-
+VALEUR_REEL {VALEUR}("."{VALEUR})?
 
 %%
 import          {   nbcolonne+=yyleng;
                     return mc_import;
                 }
 ISIL.io         {   nbcolonne+=yyleng;
+                    yylval.str=strdup("ISIL.io");
                     return bib_io;
                 }
 ISIL.lang       {   nbcolonne+=yyleng;
+                    yylval.str=strdup("ISIL.lang");
                     return bib_lang;
                 }
 ";"             {   nbcolonne+=yyleng;
@@ -157,6 +158,7 @@ for             {   nbcolonne+=yyleng;
                     return parenth_ferm;
                 }
 {TEXT}          {   nbcolonne+=yyleng;
+                    yylval.str=strdup(yytext);
                     return mc_text;
                 }
 IN              {   nbcolonne+=yyleng;

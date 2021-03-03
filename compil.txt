@@ -1,12 +1,16 @@
 import ISIL.io;
-import ISIL.io;
 public class $chakib{
-    Entier $x,$y,$i;
+    Entier $x,$i;
+    Chaine $y;
+    Reel $z,$boo;
     Reel @tab1[10];
     CONST Entier $val:=10;
     main(){
-        @tab1[1]:= 10;
-
+        $i:=1;
+        $z:=1.5;
+        $x:=5;
+        $boo:=5.5;
+        $y:="chakib";
 
     }
 }

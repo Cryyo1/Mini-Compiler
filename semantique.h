@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include <string.h>
 /******************************************************************************/
 typedef struct{
   char* NomEntite;
@@ -211,6 +212,7 @@ int indexOutOfBoundV2(char* entite,char* variable){
       }
       curr=curr->next;
     } 
+    curr = head;
     while (curr != NULL)
     {
       if(strcmp(curr->element.NomEntite,variable) == 0){
@@ -224,4 +226,81 @@ int indexOutOfBoundV2(char* entite,char* variable){
     else 
       return 0;
 }  
+/**************************************************************************************/
+char* getType(char* entite){
+    list curr;
+    curr=head;
+    char *type;
+    while (curr != NULL)
+    {
+      if(strcmp(curr->element.NomEntite,entite) == 0)
+          type= strdup(curr->element.TypeEntite);
+      curr=curr->next;
+    }
+    return type;
+}
+
+
+/***************************************************************************************/
+int formatage(char *texte, char *ls_idf[20],int taille){
+  int i,j;
+  char * signes[20], *signe;
+  char *ls_types [20];
+  char* type;
+  for(i=0;i<taille;i++){
+    type = getType(ls_idf[taille-i-1]);
+    ls_types[i]=strdup(type);
+  }
+  j=0;
+  for(i=j;i<=strlen(texte);i++){
+    signe = "";
+    if(texte[i] == '%'){
+      signe = strdup("%");
+      if(texte[i+1] == 'f' || texte[i+1] == 'd' || texte[i+1] == 's'){
+        strncat(signe, &texte[i+1],1);
+        signes[j]= signe;
+        j++;
+      }
+    }
+  }
+  if(j!=taille) {
+    return 0;
+  }
+  if(j==taille){
+    for(i=0;i<j;i++){
+      if(strcmp(signes[i],"%d")==0 && strcmp(ls_types[i],"Entier")==0 || strcmp(signes[i],"%f")==0 && strcmp(ls_types[i],"reel")==0 || strcmp(signes[i],"%s")==0 && strcmp(ls_types[i],"chaine")==0) {
+        }
+      else {
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+/******************************************************************************************/
+int typeMismatch(char *ls_idf_exp[20],char* lef_idf,int taille){
+  char* type=getType(lef_idf);
+  int i;
+  for(i=0;i<taille;i++){
+      if(strcmp(type,getType(ls_idf_exp[i])) != 0)
+        return 1;
+  }
+  return 0;
+
+}
+/***********************************************************/
+int valueNotInitialized(char* entite){
+    list curr;
+    curr=head;
+    char *type;
+    while (curr != NULL)
+    {
+      if(strcmp(curr->element.NomEntite,entite) == 0)
+          if(strcmp(curr->element.value,"") == 0)
+            return 1;
+      curr=curr->next;
+    }
+    return 0;
+}
+
 
