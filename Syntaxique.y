@@ -3,7 +3,6 @@ int nbligne=1;
 int nbcolonne=1;
 int sauvValue=0;
 float sauvValueReel=0;
-char* sauvOp="";
 char* sauvValueStr="";
 char type[20],constante[20],tmp[20];
 char *ls_idf[20],*list_idf_exp[20];
@@ -24,7 +23,14 @@ int i=0,k=0;
 		affect mc_somme mc_soust mc_multi mc_div
 		mc_egal mc_inf mc_sup mc_inf_egal mc_sup_egal mc_not_egal mc_for
 		parenth_ouv parenth_ferm mc_out mc_in mc_main <str>mc_text
+
+%left mc_somme mc_soust
+%left mc_div mc_multi
+
+%type <reel> EXPRESSION
 %%
+
+
 
 S:LISTE_BIB CLASS aco_ouv LISTE_DEC mc_main parenth_ouv parenth_ferm aco_ouv CORPS aco_ferm aco_ferm
 		{printf("syntaxe correcte\n");}
@@ -239,12 +245,12 @@ LISTE_AFFECT:idf affect EXPRESSION pvg{
 					YYACCEPT;
 				}
 				if(strcmp(getType($1),"Entier") == 0){
-					sprintf(tmp,"%d",sauvValue);
+					sprintf(tmp,"%d",(int)$3);
 					insertValue($1,tmp);
 					sauvValue = 0;
 				}else{
 					if(strcmp(getType($1),"reel") == 0){
-						sprintf(tmp,"%f",sauvValueReel);
+						sprintf(tmp,"%f",$3);
 						insertValue($1,tmp);
 						sauvValueReel = 0;
 					}else{
@@ -258,6 +264,7 @@ LISTE_AFFECT:idf affect EXPRESSION pvg{
 					printf("Erreur semantique :  Non compatibilite de type !!!!\n");
 					YYACCEPT;
 				}
+				printf("[%f]",$3);
 				
 			}
 			|idf_tab crochet_ouv idf crochet_ferm affect EXPRESSION pvg {
@@ -266,27 +273,60 @@ LISTE_AFFECT:idf affect EXPRESSION pvg{
 					YYACCEPT;
 				}
 			}
-			|idf_tab crochet_ouv valeur crochet_ferm affect EXPRESSION pvg{
+			|idf_tab crochet_ouv valeur crochet_ferm affect EXPRESSION pvg {
 				if(indexOutOfBound($1,$3)==1){
-					printf("Erreur semantique : Index superierur a la taille de tableau ou inferierur a 0 !!!!\n");
+					printf("Erreur semantique : Index superierur a la taille du tableau ou inferierur a 0 !!!!\n");
 					YYACCEPT;
 				}
 			} 
+			|idf_tab crochet_ouv EXPRESSION crochet_ferm affect EXPRESSION pvg{
+				if($3 < 0 ){
+					printf("Erreur semantique : Index inferierur a la taille du tableau ou inferierur a 0 !!!!\n");
+					YYACCEPT;
+				}
+				if(indexOutOfBoundV2($1,$3)==1){
+					printf("Erreur semantique : Index superierur a la taille du tableau ou inferierur a 0 !!!!\n");
+					YYACCEPT;
+				}
+			}
+			
+
 ;
 
 
-EXPRESSION:	TYPE_VALEUR
-			|EXPRESSION OPERATION EXPRESSION{
-				if(strcmp(sauvOp,"/")== 0 && sauvValue==0){
+EXPRESSION:	TYPE_VALEUR{
+				if(sauvValue != 0)
+					$$=sauvValue;
+				if(sauvValueReel != 0)
+					$$=sauvValueReel;
+			}
+			|EXPRESSION mc_div EXPRESSION{
+				if(sauvValue==0){
 					printf ("Erreur semantique : division par zero !!!!!\n");
 					YYACCEPT;
-				} 
-			}
+				}else{
+					$$=$1/$3;
+				}
+            }
+			|EXPRESSION mc_somme EXPRESSION{
+						$$=$1+$3;
+            }
+			|EXPRESSION mc_soust EXPRESSION{
+						$$=$1-$3;
+            }
+			|EXPRESSION mc_multi EXPRESSION{
+						$$=$1*$3;
+            }
+			|mc_soust EXPRESSION{ $$=-$2; }
+
 			|idf{
 				if(valueNotInitialized($1)){
 					printf ("Erreur semantique : valeur de %s n'est pas intialiser !!!!!\n",$1);
 					YYACCEPT;
 				}
+				float value;
+				sscanf(getValue($1),"%f",&value);
+				$$=value;
 				list_idf_exp[k]=$1;
 				k++;
 			}
@@ -302,12 +342,6 @@ TYPE_VALEUR:valeur{
 
 ;
 
-OPERATION: 	mc_somme{sauvOp=strdup($1)}
-			|mc_soust{sauvOp=strdup($1)}
-			|mc_multi{sauvOp=strdup($1)}
-			|mc_div{sauvOp=strdup($1)}
-
-;
 
 
 BOUCLE:mc_for parenth_ouv INIT pvg CONDITION pvg INCREMENT parenth_ferm aco_ouv LISTE_INST aco_ferm

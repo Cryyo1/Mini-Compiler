@@ -6,11 +6,8 @@ public class $chakib{
     Reel @tab1[10];
     CONST Entier $val:=10;
     main(){
-        $i:=1;
-        $z:=1.5;
-        $x:=5;
-        $boo:=5.5;
-        $y:="chakib";
-
+        $i:=11;
+        $x:=$i + 10;
+        @tab[-10+11-2]:=3;
     }
 }

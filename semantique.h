@@ -239,8 +239,18 @@ char* getType(char* entite){
     }
     return type;
 }
-
-
+/**************************************************************************************/
+char* getValue(char* entite){
+    list curr;
+    curr=head;
+    while (curr != NULL)
+    {
+      if(strcmp(curr->element.NomEntite,entite) == 0)
+          return curr->element.value; 
+      curr=curr->next;
+    }
+    return "";
+}
 /***************************************************************************************/
 int formatage(char *texte, char *ls_idf[20],int taille){
   int i,j;
